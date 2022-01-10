@@ -1,7 +1,35 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;  //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+
+
+
+[System.Serializable]
+public class Data
+{
+	public int Best_Score;
+	public int Coin;
+	public int Character;
+
+	//enum Character
+	//{
+	//	BUSINESSMAN
+	//}
+
+
+
+	public void printData()
+	{
+		Debug.Log("Coin:" + Coin);
+		Debug.Log("Best_Score:" + Best_Score);
+		Debug.Log("Character:" + Character);
+	}
+}
+
 
 public class GameManger : MonoBehaviour
 {
@@ -9,161 +37,452 @@ public class GameManger : MonoBehaviour
 	public GameObject[] Stairs;
 	public Slider LifeTime;
 	public Text Count;
+	public GameObject score;
+	public GameObject Coin;
+
 
 
 	private GameObject player;
 	private Animator anim;
 
 	private bool reverse = false;
+	private int reverse_num = 0;
 
 	private float hp_minus=0.1f;
 	private int climbcount=0;
+	private bool die=false;
 
-	
+	private Vector2 stairs_maxpos;
 
-
-	//¹«ÇÑ°è´Ü ¸¸µé±â + °è´Ü°ú Ä³¸¯ÅÍ ¼Ó¼ºÃß°¡(Right,left)ÇØ¼­ °°Àº ¼Ó¼ºÀÏ¶§ ¿òÁ÷¿©¾ß¸¸ »ı¸í½Ã°£°ú °è´Ü Ä«¿îÆ®°¡ ¿Ã¶ó°¨..´Ù¸¥¼Ó¼ºÀ¸·Î ¿òÁ÷ÀÌ¸é Die
-
-	//ÀÏÁ¤ ÁÂÇ¥ ÀÌ»ó ³»·Á°£ °è´Ü(ÇÃ·¹ÀÌ¾îÀÇ ´«¿¡ ¾Èº¸ÀÌ°Ô µÈ °è´Ü)À» Á¦ÀÏ À§ÂÊ¿¡ ¹èÄ¡½ÃÅ´(Á¦ÀÏ ³ôÀº À§Ä¡ÀÇ °è´Ü °ªÀ» ¾Ë°í ÀÖ¾î¾ßÇÔ)
-
+	//1ï¿½ï¿½Â°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½Ñºï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ ï¿½Ó½Ã·ï¿½ ï¿½ï¿½ï¿½
+	private bool pos_set=true;
 
 
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½å°ªï¿½ï¿½
 
 
-	private void Awake()
+	private Sprite cheerleader;
+	private Sprite salaryman;
+
+
+	private Data data;
+	private int best;
+	private int coin_check;
+	private int get_coin;
+	private bool get=true;  //ì—…ë°ì´íŠ¸ì—ì„œ ì½”ì¸ì„ ì˜¬ë ¤ì£¼ê¸°ë–„ë¬¸ì— í•œë²ˆë§Œ ì˜¬ë¼ê°€ë„ë¡ ì²´í¬í•˜ëŠ” ë³€ìˆ˜.
+	string str;
+
+	enum Stairs_Dir
 	{
-		player = GameObject.Find("Player");
-
-		anim = player.GetComponent<Animator>();
-
-		Count.text = climbcount.ToString();
-
+		RIGHT,
+		LEFT
+			
 	}
+
+
+	private Stairs_Dir[] stairs_dir= new Stairs_Dir[20];
+
+	//ï¿½ï¿½ï¿½Ñ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½Ü°ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½Ó¼ï¿½ï¿½ß°ï¿½(Right,left)ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ó¼ï¿½ï¿½Ï¶ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ã¶ï¿½..ï¿½Ù¸ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì¸ï¿½ Die
+
+	//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½Ì»ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½(ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Èºï¿½ï¿½Ì°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ê¿ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½Å´(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ë°ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½)
+
+
+
+
+
+
 
 
 	// Start is called before the first frame update
 	void Start()
     {
 
+		//salaryman = (Sprite)Resources.Load("Salaryman",typeof(Sprite));
+		//cheerleader = (Sprite)Resources.Load("Cheerleader",typeof(Sprite));
+		salaryman = Resources.Load<Sprite>("Salaryman");
+		cheerleader = Resources.Load<Sprite>("Cheerleader");
+
+
+
+
+		player = GameObject.Find("Player");
+		anim = player.GetComponent<Animator>();
+
+		Count.text = climbcount.ToString();
+
+		stairs_maxpos = Stairs[19].transform.position;
+
+		Coin.transform.position = new Vector3(stairs_maxpos.x, stairs_maxpos.y + 0.35f);
+
+		for (int i=0;i<20;i++)
+		{
+			if(i >=0 && i<3)
+				stairs_dir[i] = Stairs_Dir.RIGHT;
+			else if(i>=3 && i<11)
+				stairs_dir[i] = Stairs_Dir.LEFT;
+			else if(i>=11 && i<17)
+				stairs_dir[i] = Stairs_Dir.RIGHT;
+			else
+				stairs_dir[i] = Stairs_Dir.LEFT;
+
+		}
+
+
+
+		str = File.ReadAllText(Application.dataPath + "/TestJson.json");
+		data = JsonUtility.FromJson<Data>(str);
+
 		
 
-    }
+		data.Character = TitleManager.character;
+		coin_check = data.Coin;
+		best = data.Best_Score;
+
+		get_coin = 0;
 
 
+
+		switch (data.Character)
+		{
+			case 1:
+				player.GetComponent<SpriteRenderer>().sprite = salaryman;
+				break;
+			case 2:
+				player.GetComponent<SpriteRenderer>().sprite = cheerleader;
+				break;
+		}
+
+		Debug.Log("ìºë¦­í„°ë²ˆí˜¸:" +data.Character);
+
+
+		/*
+		//data insert
+		Data data = new Data();
+		data.Best_Score = 0;
+		data.Coin = 0;
+		data.Character = 0;
+
+		//Objectë°ì´í„°ë¥¼ JSoní˜•ì‹ìœ¼ë¡œ ìŠ¤íŠ¸ë§ì— ë„£ìŒ.
+		string str = JsonUtility.ToJson(data);
+		Debug.Log("ToJson: " + str);
+
+
+
+		//JSoní˜•ì‹ì˜ ë°ì´í„°ë¥¼ ë‹¤ì‹œ ì˜¤ë¸Œì íŠ¸ í˜•ìœ¼ë¡œ ë³€í™˜.
+		Data data2 = JsonUtility.FromJson<Data>(str);
+		data2.printData();
+
+
+		//file save
+		Data data3 = new Data();
+		data3.Best_Score = 200;
+		data3.Coin = 100;
+		File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data3));
+
+
+		//file load
+		string str2 = File.ReadAllText(Application.dataPath + "/TestJson.json");
+		Data data4 = JsonUtility.FromJson<Data>(str2);
+		data4.printData();
+
+		*/
+
+
+
+	}
+
+
+
+	private void create_stairs(int i)
+	{
+		if (player.transform.position.y - Stairs[i].transform.position.y >= 2.0f)
+		{
+
+			int rand = Random.Range(0, 2);
+
+			//Vector2 v = Stairs[i].transform.position;
+			Vector2 v = stairs_maxpos;
+
+
+			if (pos_set)
+			{
+				v.y += 0.8f;
+				pos_set = false;
+			}
+			else
+				v.y += 0.4f;
+
+
+
+
+			switch ((Stairs_Dir)rand)
+			{
+				case Stairs_Dir.RIGHT:
+					v.x +=0.5f;
+					stairs_dir[i] = Stairs_Dir.RIGHT;
+					break;
+
+				case Stairs_Dir.LEFT:
+					v.x -=0.5f;
+					stairs_dir[i] = Stairs_Dir.LEFT;
+					break;
+
+			}
+
+			stairs_maxpos = v;
+			Stairs[i].transform.position = v;
+
+
+			//ë§ˆì§€ë§‰ë°°ì—´(19)ì˜ ê³„ë‹¨ì´ ì§€ì›Œì§ˆë•Œ(íšŒìˆ˜ë¡œëŠ” 20ë²ˆì§¸ë§ˆë‹¤) ì½”ì¸ì˜ ìœ„ì¹˜ ë³€ê²½ ë° ì½”ì¸íšë“ ê°€ëŠ¥í•˜ê²Œ 
+			if (i == 19)
+			{
+				Coin.SetActive(true);
+				Coin.transform.position = new Vector3(stairs_maxpos.x, stairs_maxpos.y + 0.35f);
+				Debug.Log("x:" + stairs_maxpos.x);
+				Debug.Log("y:" + stairs_maxpos.y);
+				get = true;
+			}
+
+
+			
+		}
+	}
+
+	private void CheckDie()
+	{
+		int num = climbcount % 20;
+
+
+		//ì˜¬ë¼ê°ˆë ¤ëŠ” ê³„ë‹¨ê³¼ ë°©í–¥ì´ ë§ëŠ”ë‹¤ë©´
+		if(reverse_num == (int)stairs_dir[num])
+		{
+			climbcount++;
+		}
+		else
+		{
+			die = true;
+			anim.SetTrigger("DieAction");
+			StartCoroutine("Die");
+			Debug.Log("Die");
+		}
+
+	}
+
+	IEnumerator Die()
+	{
+		yield return new WaitForSeconds(1.5f);
+
+		while (true)
+		{
+			Vector2 vec = player.transform.position;
+			vec.y -= 0.1f;
+
+			player.transform.position = vec;
+
+			yield return new WaitForSeconds(0.03f);
+
+			if (player.transform.position.y <= -6)
+				break;
+		}
+
+		score.SetActive(true);
+		score.transform.Find("Score").GetComponent<Text>().text += climbcount;
+
+		if (climbcount >= best)
+		{
+			best = climbcount;
+
+			data.Best_Score = best;
+		}
+
+		score.transform.Find("BestScore").GetComponent<Text>().text += best;
+		score.transform.Find("Coin").GetComponent<Text>().text += get_coin;
+
+		coin_check += get_coin;
+		data.Coin = coin_check;
+
+		File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data));
+
+		yield return null;
+
+
+	}
+
+
+	public void ReStart()
+	{
+		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+	}
+	public void LoadTitle()
+	{
+
+		SceneManager.LoadScene("TitleScene");
+
+	}
 
     // Update is called once per frame
     void Update()
     {
-		//½Ã°£¿¡ µû¸¥ »ı¸í°¨¼Ò
+
+		//ì½”ì¸ íšë“ ì¡°ê±´
+		if (climbcount != 0 && climbcount % 20 == 0 && get)
+		{
+			get = false;
+			//ì½”ì¸íšë“
+			get_coin++;
+			//ì½”ì¸ì„ ì¼ì‹œì ìœ¼ë¡œ ì§€ì›Œì¤¬ë‹¤ê°€.
+			Coin.SetActive(false);
+			
+		}
+
+
+
+		//ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		LifeTime.value -= Time.deltaTime * hp_minus;
 
 
 		Count.text = climbcount.ToString();
 
-		//»ı¸í½Ã°£ÀÌ 0ÀÌ µÇ¾úÀ»¶§ Ã³¸®
-		if (LifeTime.value <0)
+		//ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ 0ï¿½ï¿½ ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+		if (LifeTime.value <=0 &&  !die )
 		{
-			//GameOver
-			Application.Quit();
+			die = true;
+
+			anim.SetTrigger("DieAction");
+
+			StartCoroutine("Die");
+
+			Debug.Log("Die");
 		}
 
+		
 
-		if(Input.GetKeyDown(KeyCode.Z))
+
+		if(Input.GetKeyDown(KeyCode.Z) && !die)
 		{
-			//¾Ö´Ï¸ŞÀÌ¼Ç ½ÃÀÛ
+			//ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½
 			anim.SetTrigger("MoveAction");
 
 
-			//°è´Ü ¿À¸£±â ¼º°ø½Ã »ı¸í½Ã°£ È¸º¹
+			//ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ï¿½ È¸ï¿½ï¿½
 			LifeTime.value += 0.05f;
 
+			
+			//ï¿½Ö°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ü°ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+			stairs_maxpos.y -= 0.4f;
 
-			//°è´Ü ¿À¸¥ Ä«¿îÆ®¸¦ Áõ°¡
-			climbcount++;
 
-			//ºĞ±â¿¡ µû¸¥ ÀÌµ¿
+			CheckDie();
+
+			//ï¿½Ğ±â¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 			if (reverse)
 			{
 				for (int i = 0; i < 20; i++)
 				{
+					create_stairs(i);
 					Vector2 vec = Stairs[i].transform.position;
-					vec.x += 0.5f;
 					vec.y += -0.4f;
+					vec.x += 0.5f;
 					Stairs[i].transform.position = vec;
+					
 
 				}
+				stairs_maxpos.x += 0.5f;
+
+				Vector2 vec1 = Coin.transform.position;
+				vec1.y += -0.4f;
+				vec1.x += 0.5f;
+				Coin.transform.position = vec1;
+
 			}
 			else
 			{
 
-				
-
 				for (int i = 0; i < 20; i++)
 				{
+					create_stairs(i);
 					Vector2 vec = Stairs[i].transform.position;
-					vec.x += -0.5f;
 					vec.y += -0.4f;
+					vec.x += -0.5f;
 					Stairs[i].transform.position = vec;
-
+					
 				}
+				stairs_maxpos.x += -0.5f;
+
+
+				Vector2 vec1 = Coin.transform.position;
+				vec1.y += -0.4f;
+				vec1.x += -0.5f;
+				Coin.transform.position = vec1;
+
 
 			}
 
 
 
-			
-
 		}
-		else if(Input.GetKeyDown(KeyCode.X))
+		else if(Input.GetKeyDown(KeyCode.X) && !die)
 		{
 
-			//°è´Ü ¹æÇâÀüÈ¯ ¼º°ø½Ã »ı¸í½Ã°£ È¸º¹
+			//ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¯ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ï¿½ È¸ï¿½ï¿½
 			LifeTime.value += 0.05f;
 
+			//ï¿½Ö°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ü°ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+			stairs_maxpos.y -= 0.4f;
 
-			//°è´Ü ¿À¸¥ Ä«¿îÆ®¸¦ Áõ°¡
-			climbcount++;
-
+			
 			if (reverse)
 			{
 				reverse = false;
+				reverse_num = 0;
 				player.GetComponent<SpriteRenderer>().flipX=false;
-
 				for (int i = 0; i < 20; i++)
 				{
+					create_stairs(i);
 					Vector2 vec = Stairs[i].transform.position;
-					vec.x += -0.5f;
 					vec.y += -0.4f;
+					vec.x += -0.5f;
 					Stairs[i].transform.position = vec;
-
+					
 				}
+				stairs_maxpos.x += -0.5f;
+
+
+				Vector2 vec1 = Coin.transform.position;
+				vec1.y += -0.4f;
+				vec1.x += -0.5f;
+				Coin.transform.position = vec1;
 
 			}
 			else
 			{
 				reverse = true;
+				reverse_num = 1;
 				player.GetComponent<SpriteRenderer>().flipX = true;
-
+				
 
 				for (int i = 0; i < 20; i++)
 				{
+					create_stairs(i);
 					Vector2 vec = Stairs[i].transform.position;
-					vec.x += 0.5f;
 					vec.y += -0.4f;
+					vec.x += 0.5f;
 					Stairs[i].transform.position = vec;
-
+					
 				}
+				stairs_maxpos.x += 0.5f;
+
+
+				Vector2 vec1 = Coin.transform.position;
+				vec1.y += -0.4f;
+				vec1.x += 0.5f;
+				Coin.transform.position = vec1;
 
 			}
 
+			CheckDie();
 
-			
 
 		}
-
-
-		
-
-
 	}
 }

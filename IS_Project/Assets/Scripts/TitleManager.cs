@@ -6,8 +6,13 @@ using UnityEngine.SceneManagement;
 
 public class TitleManager : MonoBehaviour
 {
+
+	public static int character;
+
+
 	public GameObject MusicOff_img;
 	public GameObject SoundOff_img;
+	public GameObject Character_Change;
 
 	private AudioSource touch;
 	private AudioClip touch_snd;
@@ -43,6 +48,7 @@ public class TitleManager : MonoBehaviour
 
 	}
 
+
 	public void Music_Btn()
 	{
 		if (music_off)
@@ -77,6 +83,28 @@ public class TitleManager : MonoBehaviour
 	{
 		if (!sound_off)
 			touch.Play();
+
+
+		Character_Change.SetActive(true);
+		this.gameObject.SetActive(false);
+	}
+
+	public void Select_Cheerleader()
+	{
+		Debug.Log("치어리더 선택");
+
+		character = 2;
+		this.gameObject.SetActive(true);
+		Character_Change.SetActive(false);
+	}
+
+	public void Select_Salaryman()
+	{
+		Debug.Log("회사원 선택");
+		character = 1;
+		this.gameObject.SetActive(true);
+		Character_Change.SetActive(false);
+
 	}
 
 	// Start is called before the first frame update
