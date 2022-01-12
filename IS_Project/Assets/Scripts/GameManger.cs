@@ -22,6 +22,11 @@ public class Data
 
 
 
+	public void SetCharacter(int a)
+	{
+		Character = a;
+	}
+
 	public void printData()
 	{
 		Debug.Log("Coin:" + Coin);
@@ -65,7 +70,11 @@ public class GameManger : MonoBehaviour
 	private Sprite salaryman;
 
 
-	private Data data;
+	//싱글톤 이용
+	DataManager data1;
+
+
+	//private Data data;
 	private int best;
 	private int coin_check;
 	private int get_coin;
@@ -105,8 +114,7 @@ public class GameManger : MonoBehaviour
 
 
 
-		player = GameObject.Find("Player");
-		anim = player.GetComponent<Animator>();
+	
 
 		Count.text = climbcount.ToString();
 
@@ -130,29 +138,52 @@ public class GameManger : MonoBehaviour
 
 
 		str = File.ReadAllText(Application.dataPath + "/TestJson.json");
-		data = JsonUtility.FromJson<Data>(str);
+		//data = JsonUtility.FromJson<Data>(str);
+		data1 = JsonUtility.FromJson<DataManager>(str);
 
-		
+		//data.Character = TitleManager.character;
+		//coin_check = data.Coin;
+		//best = data.Best_Score;
 
-		data.Character = TitleManager.character;
-		coin_check = data.Coin;
-		best = data.Best_Score;
+		coin_check = data1.Coin;
+		best = data1.Best_Score;
 
 		get_coin = 0;
 
 
 
-		switch (data.Character)
+		//switch (data.Character)
+		//{
+		//	case 1:
+		//		player = GameObject.Find("Salaryman");
+		//		GameObject.Find("Cheerleader").SetActive(false);
+		//		break;
+		//	case 2:
+		//		player = GameObject.Find("Cheerleader");
+		//		GameObject.Find("Salaryman").SetActive(false);
+		//		break;
+		//}
+
+		switch (data1.Character)
 		{
 			case 1:
-				player.GetComponent<SpriteRenderer>().sprite = salaryman;
+				player = GameObject.Find("Salaryman");
+				GameObject.Find("Cheerleader").SetActive(false);
 				break;
 			case 2:
-				player.GetComponent<SpriteRenderer>().sprite = cheerleader;
+				player = GameObject.Find("Cheerleader");
+				GameObject.Find("Salaryman").SetActive(false);
 				break;
 		}
 
-		Debug.Log("캐릭터번호:" +data.Character);
+
+		anim = player.GetComponent<Animator>();
+
+		//Debug.Log("캐릭터번호:" +data.Character);
+		Debug.Log("캐릭터번호:" + data1.Character);
+
+
+
 
 
 		/*
@@ -238,13 +269,9 @@ public class GameManger : MonoBehaviour
 			{
 				Coin.SetActive(true);
 				Coin.transform.position = new Vector3(stairs_maxpos.x, stairs_maxpos.y + 0.35f);
-				Debug.Log("x:" + stairs_maxpos.x);
-				Debug.Log("y:" + stairs_maxpos.y);
 				get = true;
 			}
 
-
-			
 		}
 	}
 
@@ -292,16 +319,19 @@ public class GameManger : MonoBehaviour
 		{
 			best = climbcount;
 
-			data.Best_Score = best;
+			//data.Best_Score = best;
+			data1.Best_Score = best;
 		}
 
 		score.transform.Find("BestScore").GetComponent<Text>().text += best;
 		score.transform.Find("Coin").GetComponent<Text>().text += get_coin;
 
 		coin_check += get_coin;
-		data.Coin = coin_check;
+		//data.Coin = coin_check;
+		data1.Coin = coin_check;
 
-		File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data));
+		//File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data));
+		File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data1));
 
 		yield return null;
 

@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.IO;
 
 public class TitleManager : MonoBehaviour
 {
 
-	public static int character;
+	//public static int character;
 
+	DataManager data1 = new DataManager();
+
+	private Data data = new Data();
 
 	public GameObject MusicOff_img;
 	public GameObject SoundOff_img;
@@ -93,7 +97,15 @@ public class TitleManager : MonoBehaviour
 	{
 		Debug.Log("치어리더 선택");
 
-		character = 2;
+		//data.Character = 2;
+		//File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data));
+
+
+		//싱글톤 이용
+		data1.Character = 2;
+		File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data1));
+
+	
 		this.gameObject.SetActive(true);
 		Character_Change.SetActive(false);
 	}
@@ -101,7 +113,15 @@ public class TitleManager : MonoBehaviour
 	public void Select_Salaryman()
 	{
 		Debug.Log("회사원 선택");
-		character = 1;
+
+		//data.Character = 1;
+		//File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data));
+
+		//싱글톤 이용
+		data1.Character = 1;
+		File.WriteAllText(Application.dataPath + "/TestJson.json", JsonUtility.ToJson(data1));
+
+		
 		this.gameObject.SetActive(true);
 		Character_Change.SetActive(false);
 
@@ -121,6 +141,14 @@ public class TitleManager : MonoBehaviour
 		touch_snd = Resources.Load<AudioClip>("Touch_Sound");
 		touch = GetComponent<AudioSource>();
 		touch.clip = touch_snd;
+
+
+
+		string str = File.ReadAllText(Application.dataPath + "/TestJson.json");
+		data = JsonUtility.FromJson<Data>(str);
+
+
+		
 
 
 	}
